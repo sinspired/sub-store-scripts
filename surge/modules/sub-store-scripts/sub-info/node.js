@@ -114,17 +114,27 @@ async function operator(proxies = [], targetPlatform, context) {
   }
 
   // 解析扩展字段（last_update / next_update / plan_name / reset_hour / reset_day 等非标准字段）
+  // 添加 decodeURIComponent 以修复编码问题
   function parseExtendedFields(raw = '') {
     const result = {}
     for (const segment of raw.split(/[;,]/)) {
       const eqIdx = segment.indexOf('=')
       if (eqIdx === -1) continue
       const key = segment.slice(0, eqIdx).trim()
-      const value = segment.slice(eqIdx + 1).trim().replace(/^['"]|['"]$/g, '')
+      let value = segment.slice(eqIdx + 1).trim().replace(/^['"]|['"]$/g, '')
+      
+      try {
+        // 对值进行 URL 解码
+        value = decodeURIComponent(value)
+      } catch (e) {
+        // 如果解码失败（比如包含非法的 % 字符），保持原样
+      }
+      
       result[key] = value
     }
     return result
   }
+
 
   /**
    * 格式化重置提示文案。
